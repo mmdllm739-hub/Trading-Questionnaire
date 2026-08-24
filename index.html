@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MEGA team | استمارة التسجيل - مؤتمر الاستثمار</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+  :root{
+    --bg-deep:#070f1c;
+    --bg-navy:#0d1b2e;
+    --card:#101f36;
+    --border:rgba(255,255,255,.09);
+    --teal:#00b48a;
+    --emerald:#00d2a0;
+    --white:#f4f8fb;
+    --muted:#8fa3ba;
+    --grad: linear-gradient(120deg, var(--teal), var(--emerald));
+    --danger:#e35d5d;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{ background:var(--bg-deep); font-family:'Tajawal', sans-serif; color:var(--white); min-height:100%; overflow-x:hidden; }
+
+  .market-bg{
+    position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none;
+    background: var(--bg-deep);
+  }
+  #anim-canvas{ position:absolute; inset:0; width:100%; height:100%; opacity:0.4; object-fit: cover;}
+  .market-overlay {
+    position:absolute; inset:0;
+    background: radial-gradient(1000px 600px at 50% 0%, rgba(20, 38, 63, 0.2) 0%, rgba(13, 27, 46, 0.5) 45%, var(--bg-deep) 100%);
+  }
+  .grid-lines{
+    position:absolute; inset:0;
+    background-image:
+      linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+    background-size: 46px 46px;
+  }
+
+  .page{ position:relative; z-index:1; }
+
+  .navbar{
+    max-width:920px; margin:26px auto 0; padding:10px 22px;
+    background:rgba(13,27,46,.75); backdrop-filter:blur(14px);
+    border:1px solid var(--border); border-radius:999px;
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+  }
+  .nav-logo{ display:flex; align-items:center; gap:10px; }
+  .logo-ring{
+    width:52px; height:52px; border-radius:50%;
+    border:2px solid var(--teal); display:flex; align-items:center; justify-content:center;
+    background:#0a1626; flex:none;
+  }
+  .logo-ring svg{ width:30px; height:30px; }
+  .nav-title{ font-family:'Cairo', sans-serif; font-weight:800; font-size:.95rem; line-height:1.3;}
+  .nav-title span{ display:block; color:var(--emerald); font-size:.7rem; font-weight:600;}
+  .nav-tag{ font-size:.78rem; color:var(--muted); border:1px solid var(--border); padding:7px 16px; border-radius:999px; white-space:nowrap;}
+  .nav-tag b{ color:var(--emerald); }
+
+  .hero{ text-align:center; padding:60px 20px 10px; max-width:760px; margin:0 auto;}
+  .eyebrow{ display:inline-block; padding:7px 18px; border:1px solid rgba(0,210,160,.4); border-radius:999px; font-size:.8rem; color:var(--emerald); background:rgba(0,180,138,.07); }
+  .hero h1{ font-family:'Cairo', sans-serif; font-weight:800; margin-top:20px; font-size:clamp(1.6rem,4vw,2.5rem); line-height:1.55; }
+  .hero h1 em{ font-style:normal; background:var(--grad); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .hero p{ margin-top:16px; color:var(--muted); line-height:2; font-size:1rem;}
+  .meta-row{ margin-top:26px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap;}
+  .meta-chip{ background:var(--card); border:1px solid var(--border); padding:10px 18px; border-radius:12px; font-size:.85rem; color:var(--white);}
+  .meta-chip b{ color:var(--emerald); }
+
+  .chain-track{ max-width:640px; margin:34px auto 0; padding:0 20px;}
+  .rail{ background:var(--card); border:1px solid var(--border); border-radius:16px; display:flex; padding:12px 8px;}
+  .chain-step{ flex:1; text-align:center; padding:6px 4px; font-size:.76rem; color:var(--muted); font-weight:700; position:relative;}
+  .chain-step.active{ color:var(--white); }
+  .chain-step .dot{ width:9px; height:9px; border-radius:50%; background:#2a3b52; margin:0 auto 6px;}
+  .chain-step.active .dot{ background:var(--grad); box-shadow:0 0 0 4px rgba(0,180,138,.18);}
+
+  .wrap{ max-width:680px; margin:0 auto; padding:44px 18px 90px;}
+  .section-card{ background:var(--card); border:1px solid var(--border); border-radius:20px; padding:30px 24px; margin-bottom:22px;}
+  .section-head{ display:flex; align-items:center; gap:14px; margin-bottom:22px;}
+  .section-num{ width:38px; height:38px; border-radius:11px; flex:none; position:relative; background:#0a1626; border:1.5px solid var(--teal); display:flex; align-items:center; justify-content:center;}
+  .section-num svg{ width:17px; height:17px;}
+  .section-head h2{ font-family:'Cairo', sans-serif; font-size:1.1rem; font-weight:700;}
+  .section-head p{ font-size:.8rem; color:var(--muted); margin-top:2px;}
+
+  .field{ margin-bottom:18px; }
+  .field label{ display:block; font-size:.9rem; font-weight:700; margin-bottom:8px;}
+  .field .hint{ font-weight:400; color:var(--muted); font-size:.76rem; margin-inline-start:6px;}
+  .field input[type="text"], .field input[type="tel"], .field input[type="email"]{
+    width:100%; padding:13px 15px; border-radius:12px; border:1.5px solid var(--border);
+    background:#0a1626; color:var(--white); font-family:'Tajawal', sans-serif; font-size:.95rem; transition:.2s;
+    text-align: right;
+  }
+  .field input::placeholder{ color:#556983; }
+  .field input:focus{ outline:none; border-color:var(--teal); box-shadow:0 0 0 4px rgba(0,180,138,.13);}
+
+  .choice-grid{ display:grid; gap:10px; }
+  .choice { 
+    display: flex; 
+    flex-direction: row; 
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 12px; 
+    padding: 16px 20px; 
+    border-radius: 12px; 
+    border: 1.5px solid var(--border); 
+    cursor: pointer; 
+    transition: .15s; 
+    background: #0a1626;
+  }
+  .choice:hover { border-color: rgba(0,180,138,.4); }
+  .choice input {
+    appearance: none; -webkit-appearance: none;
+    width: 22px; height: 22px; flex: none;
+    border: 2px solid var(--muted);
+    border-radius: 50%;
+    background-color: transparent;
+    cursor: pointer;
+    transition: 0.2s;
+    margin: 0;
+    margin-inline-end: 12px; /* Fallback */
+  }
+  .choice input:checked {
+    background-color: var(--teal);
+    border-color: var(--teal);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2304231a' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+    background-size: 80%;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+  .choice span {
+    flex: 1;
+    font-size: .92rem;
+    text-align: right;
+  }
+  .choice.checked{ border-color:var(--teal); background:rgba(0,180,138,.09); }
+
+  .conditional{ margin-top:12px; display:none; }
+  .conditional.show{ display:block; }
+
+  .submit-bar{ text-align:center; margin-top:8px; }
+  .submit-btn{
+    width:100%; padding:17px; border:none; border-radius:999px; cursor:pointer;
+    background:var(--grad); color:#04231a; font-family:'Cairo', sans-serif; font-weight:800;
+    font-size:1.05rem; transition:.2s; box-shadow:0 14px 30px -12px rgba(0,180,138,.5);
+  }
+  .submit-btn:hover{ transform:translateY(-2px); }
+  .submit-btn:disabled{ opacity:.6; cursor:not-allowed; transform:none; }
+  .submit-note{ margin-top:12px; font-size:.78rem; color:var(--muted); }
+  .req{ color:var(--danger); }
+  .form-msg{ text-align:center; font-size:.85rem; margin-top:10px; color:var(--danger); display:none;}
+  .form-msg.show{ display:block; }
+
+  .confirm{ display:none; text-align:center; padding:60px 24px 100px; max-width:520px; margin:0 auto;}
+  .confirm.show{ display:block; }
+  .confirm .check{ width:74px; height:74px; border-radius:50%; background:var(--grad); margin:0 auto 22px; display:flex; align-items:center; justify-content:center;}
+  .confirm h2{ font-family:'Cairo', sans-serif; font-size:1.5rem; margin-bottom:14px;}
+  .confirm p{ color:var(--muted); line-height:2; font-size:.98rem;}
+  .confirm .badge{ margin-top:22px; display:inline-block; padding:9px 18px; border-radius:999px; background:#0a1626; border:1px solid var(--teal); color:var(--emerald); font-size:.85rem; font-weight:700;}
+
+  footer{ text-align:center; padding:30px; color:#4d6178; font-size:.78rem; position:relative; z-index:1;}
+
+  @media(max-width:560px){
+    .navbar{ padding:8px 14px; }
+    .nav-tag{ display:none; }
+    .section-card{ padding:24px 16px; margin-bottom: 16px; }
+    .choice { padding: 12px 14px; }
+    .choice span { font-size: .85rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="market-bg">
+  <canvas id="anim-canvas"></canvas>
+  <div class="market-overlay"></div>
+  <div class="grid-lines"></div>
+</div>
+
+<div class="page">
+
+  <div class="navbar">
+    <div class="nav-tag"><b>29</b> من الشهر · مقاعد محدودة</div>
+    <div class="nav-logo">
+      <img src="Screenshot%202026-08-24%20020449.png" alt="MEGA team" style="height: 48px; object-fit: contain;">
+    </div>
+  </div>
+
+  <div class="hero">
+    <div class="eyebrow">دعوة خاصة · مؤتمر الاستثمار والأعمال</div>
+    <h1>مؤتمر <em>MEGA</em> الاستثماري<br>مستقبل التداول وريادة الأعمال</h1>
+    <p>أنت على بُعد خطوة واحدة من الانضمام لأضخم تجمّع استثماري يجمع الفوركس، بناء الثروة، وريادة الأعمال تحت سقف واحد. عبّئ الاستمارة أدناه لتأكيد حضورك وتخصيص تجربتك.</p>
+    <div class="meta-row">
+      <div class="meta-chip">📅 <b>29</b> من الشهر الحالي</div>
+      <div class="meta-chip">🎟️ المقاعد محدودة</div>
+      <div class="meta-chip">⏱️ دقيقتين للتسجيل</div>
+    </div>
+  </div>
+
+  <div class="chain-track">
+    <div class="rail">
+      <div class="chain-step active" data-step="1"><div class="dot"></div>بياناتك</div>
+      <div class="chain-step" data-step="2"><div class="dot"></div>اهتمامك</div>
+      <div class="chain-step" data-step="3"><div class="dot"></div>التأكيد</div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <form id="megaForm">
+
+      <div class="section-card">
+        <div class="section-head">
+          <div class="section-num"><svg viewBox="0 0 24 24" fill="none" stroke="#00D2A0" stroke-width="2"><path d="M12 12a4 4 0 100-8 4 4 0 000 8zM4 20c0-4 3.5-7 8-7s8 3 8 7"/></svg></div>
+          <div><h2>البيانات الشخصية</h2><p>لتتمكن فرقنا من التواصل معك وتأكيد مقعدك</p></div>
+        </div>
+        <div class="field">
+          <label>الاسم الكامل <span class="req">*</span></label>
+          <input type="text" name="full_name" placeholder="مثال: أحمد محمد العلي" required>
+        </div>
+        <div class="field">
+          <label>رقم الواتساب <span class="hint">(مع رمز الدولة)</span> <span class="req">*</span></label>
+          <input type="tel" name="whatsapp" placeholder="مثال: xxxxxxxx +972" required>
+        </div>
+        <div class="field">
+          <label>البريد الإلكتروني</label>
+          <input type="email" name="email" placeholder="example@email.com">
+        </div>
+        <div class="field">
+          <label>المدينة / المحافظة <span class="req">*</span></label>
+          <input type="text" name="city" placeholder="مثال: جنين" required>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-head">
+          <div class="section-num"><svg viewBox="0 0 24 24" fill="none" stroke="#00D2A0" stroke-width="2"><path d="M3 17l6-6 4 4 8-8"/></svg></div>
+          <div><h2>مستوى الخبرة والاهتمام</h2><p>نساعدك على تخصيص محتوى الجلسات لمستواك</p></div>
+        </div>
+
+        <div class="field">
+          <label>ما هو مجال اهتمامك الرئيسي؟ <span class="hint">(يمكن اختيار أكثر من خيار)</span></label>
+          <div class="choice-grid">
+            <label class="choice"><input type="checkbox" name="interest[]" value="forex"><span>التداول في سوق الفوركس</span></label>
+            <label class="choice"><input type="checkbox" name="interest[]" value="portfolio"><span>الاستثمار طويل الأجل وبناء المحافظ</span></label>
+            <label class="choice"><input type="checkbox" name="interest[]" value="business"><span>ريادة الأعمال وتأسيس المشاريع</span></label>
+            <label class="choice"><input type="checkbox" name="interest[]" value="join_team"><span>التعرف على فرص الانضمام لفريق MEGA</span></label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>كيف تقيّم خبرتك الحالية في التداول والاستثمار؟</label>
+          <div class="choice-grid">
+            <label class="choice"><input type="radio" name="level" value="beginner"><span>مبتدئ تماماً — أبحث عن بداية صحيحة</span></label>
+            <label class="choice"><input type="radio" name="level" value="intermediate"><span>متوسط — لدي معرفة أو تجربة سابقة</span></label>
+            <label class="choice"><input type="radio" name="level" value="advanced"><span>متقدم — أبحث عن استراتيجيات أعمق</span></label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>أكبر عقبة تواجهك حالياً في تحقيق أهدافك المالية؟</label>
+          <div class="choice-grid">
+            <label class="choice"><input type="radio" name="obstacle" value="capital"><span>نقص رأس المال</span></label>
+            <label class="choice"><input type="radio" name="obstacle" value="knowledge"><span>نقص المعرفة والخبرة التطبيقية</span></label>
+            <label class="choice"><input type="radio" name="obstacle" value="mentor"><span>عدم وجود موجّه أو مجتمع داعم</span></label>
+            <label class="choice"><input type="radio" name="obstacle" value="risk"><span>إدارة المخاطر والخوف من الخسارة</span></label>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-head">
+          <div class="section-num"><svg viewBox="0 0 24 24" fill="none" stroke="#00D2A0" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg></div>
+          <div><h2>تأكيد الحضور</h2><p>الخطوة الأخيرة لحجز مقعدك</p></div>
+        </div>
+
+        <div class="field">
+          <label>هل تؤكد حضورك في الموعد المحدد؟</label>
+          <div class="choice-grid">
+            <label class="choice"><input type="radio" name="confirm" value="yes"><span>نعم، أؤكد حضوري تماماً</span></label>
+            <label class="choice"><input type="radio" name="confirm" value="maybe"><span>مهتم، أود معرفة التفاصيل أولاً</span></label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>هل ترغب بدعوة صديق أو شريك عمل؟</label>
+          <div class="choice-grid">
+            <label class="choice"><input type="radio" name="bring_friend" value="yes" id="friendYes"><span>نعم</span></label>
+            <label class="choice"><input type="radio" name="bring_friend" value="no"><span>لا، سأحضر بمفردي</span></label>
+          </div>
+          <div class="conditional" id="friendField">
+            <input type="text" name="friend_info" placeholder="اسم الصديق ورقم الواتساب">
+          </div>
+        </div>
+      </div>
+
+      <div class="submit-bar">
+        <button type="submit" class="submit-btn" id="submitBtn">تأكيد التسجيل والحصول على مقعدي</button>
+        <p class="submit-note">سيتواصل معك أحد مستشاري فريق MEGA عبر الواتساب خلال 24 ساعة</p>
+        <p class="form-msg" id="formMsg">صار في خطأ، حاول مرة ثانية أو تواصل معنا مباشرة عبر واتساب.</p>
+      </div>
+    </form>
+
+    <div class="confirm" id="confirmScreen">
+      <div class="check"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#04231a" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
+      <h2>تم استلام طلبك بنجاح!</h2>
+      <p>شكراً لانضمامك إلى MEGA team. سيقوم أحد مستشاري الفريق بالتواصل معك عبر الواتساب خلال 24 ساعة لتأكيد تفاصيل المقعد وموقع المؤتمر.<br>أهلاً بك في عالم التغيير!</p>
+      
+      <div style="margin-top: 25px;">
+        <button type="button" class="btn" id="downloadPdfBtn" style="background:#101f36; color:#00D2A0; border:1px solid #00D2A0; border-radius:999px; padding:12px 24px; cursor:pointer; font-family:'Tajawal', sans-serif; font-size:.95rem; font-weight:600; display:inline-flex; align-items:center; gap:8px;">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          تحميل بيانات التسجيل (PDF)
+        </button>
+      </div>
+      <br>
+      <div class="badge">MEGA team</div>
+    </div>
+
+  </div>
+  
+  <!-- PDF Template (Hidden) -->
+  <div id="pdfContainer" style="display: none;">
+    <div id="pdfTemplate" style="width: 800px; background: #ffffff; color: #070f1c; font-family: 'Tajawal', sans-serif; direction: rtl; border-radius: 12px; overflow: hidden; border: 1px solid #e1e8ed; box-shadow: 0 10px 30px rgba(0,0,0,0.05);">
+      
+      <!-- Banner Header with Trading Image -->
+      <div style="height: 180px; background-image: url('https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=1200&auto=format&fit=crop'); background-size: cover; background-position: center; position: relative;">
+        <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(10,22,38,0.4), rgba(10,22,38,0.9));"></div>
+        <div style="position: absolute; bottom: 20px; right: 30px; color: white; z-index: 2;">
+          <h1 style="font-family: 'Cairo', sans-serif; font-size: 34px; margin:0; color: #00D2A0; text-transform: uppercase;">MEGA Trading Team</h1>
+          <h2 style="font-family: 'Cairo', sans-serif; font-size: 20px; margin: 5px 0 0; color: #f4f8fb;">تذكرة تسجيل مؤتمر التداول والاستثمار</h2>
+        </div>
+      </div>
+
+      <div style="padding: 30px 40px;">
+        <!-- Two Column Grid for Data -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          <div style="background: #f8fafc; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; position: relative; overflow: hidden;">
+            <!-- Decorative subtle chart in background of card -->
+            <svg viewBox="0 0 200 100" style="position: absolute; bottom: 0; left: 0; width: 100%; opacity: 0.05; pointer-events: none;"><polyline fill="none" stroke="#0f172a" stroke-width="4" points="0,80 40,60 80,90 120,40 160,50 200,20"/></svg>
+            
+            <h3 style="font-family: 'Cairo', sans-serif; margin:0 0 15px 0; color: #0f172a; border-bottom: 2px solid #00D2A0; padding-bottom: 10px; display: inline-block;">البيانات الشخصية</h3>
+            <p style="margin: 8px 0;"><strong>الاسم:</strong> <span id="pdfName"></span></p>
+            <p style="margin: 8px 0;"><strong>المدينة:</strong> <span id="pdfCity"></span></p>
+            <p style="margin: 8px 0;"><strong>الواتساب:</strong> <span id="pdfPhone" dir="ltr" style="display:inline-block;"></span></p>
+            <p style="margin: 8px 0;"><strong>الإيميل:</strong> <span id="pdfEmail" dir="ltr" style="display:inline-block;"></span></p>
+          </div>
+
+          <div style="background: #f8fafc; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; position: relative; overflow: hidden;">
+            <svg viewBox="0 0 200 100" style="position: absolute; bottom: 0; left: 0; width: 100%; opacity: 0.05; pointer-events: none;"><polyline fill="none" stroke="#00D2A0" stroke-width="4" points="0,50 40,70 80,30 120,40 160,10 200,0"/></svg>
+
+            <h3 style="font-family: 'Cairo', sans-serif; margin:0 0 15px 0; color: #0f172a; border-bottom: 2px solid #00D2A0; padding-bottom: 10px; display: inline-block;">التفاصيل الفنية</h3>
+            <p style="margin: 8px 0;"><strong>الخبرة:</strong> <span id="pdfLevel"></span></p>
+            <p style="margin: 8px 0;"><strong>أكبر عقبة:</strong> <span id="pdfObstacle"></span></p>
+            <p style="margin: 8px 0;"><strong>الاهتمامات:</strong> <span id="pdfInterest"></span></p>
+            <p style="margin: 8px 0;"><strong>الحضور:</strong> <span id="pdfConfirm"></span></p>
+          </div>
+        </div>
+
+        <!-- Chart Visualization Section -->
+        <div style="margin-top: 30px; background: #ffffff; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0;">
+          <h4 style="font-family: 'Cairo', sans-serif; margin: 0 0 10px 0; color: #64748b; font-size: 15px;">مؤشر النمو المستهدف (Projected Growth)</h4>
+          <svg viewBox="0 0 700 120" style="width: 100%; height: 100px;">
+            <defs>
+              <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="rgba(0, 210, 160, 0.4)"/>
+                <stop offset="100%" stop-color="rgba(0, 210, 160, 0)"/>
+              </linearGradient>
+            </defs>
+            <polyline fill="none" stroke="#e2e8f0" stroke-width="1" points="0,30 700,30" stroke-dasharray="4,4"/>
+            <polyline fill="none" stroke="#e2e8f0" stroke-width="1" points="0,70 700,70" stroke-dasharray="4,4"/>
+            <polyline fill="url(#chartGrad)" stroke="none" points="0,120 0,90 100,70 200,100 300,50 400,60 500,20 600,30 700,10 700,120"/>
+            <polyline fill="none" stroke="#00D2A0" stroke-width="3" points="0,90 100,70 200,100 300,50 400,60 500,20 600,30 700,10"/>
+            <circle cx="700" cy="10" r="5" fill="#00D2A0" stroke="#fff" stroke-width="2"/>
+          </svg>
+        </div>
+
+        <div style="margin-top: 25px; text-align: center; color: #64748b; font-size: 13px;">
+          ✅ تم إصدار هذه الوثيقة إلكترونياً وتعتبر إثباتاً للتسجيل الأولي.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>© MEGA team — استمارة تسجيل المؤتمر</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script>
+  (function(){
+    const canvas = document.getElementById('anim-canvas');
+    const ctx = canvas.getContext('2d');
+    const frameCount = 240; // 0 to 239
+    
+    canvas.width = 1920;
+    canvas.height = 1080;
+    
+    const images = [];
+    for(let i=0; i<frameCount; i++) {
+        let img = new Image();
+        img.src = 'سس/frame_' + String(i).padStart(6, '0') + '.png';
+        images.push(img);
+    }
+    
+    let currentFrame = 0;
+    function draw() {
+      let img = images[currentFrame];
+      if (img.complete && img.naturalWidth > 0) {
+          if(canvas.width !== img.naturalWidth) {
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+          }
+          ctx.drawImage(img, 0, 0);
+      }
+      currentFrame = (currentFrame + 1) % frameCount;
+      setTimeout(() => requestAnimationFrame(draw), 1000/24); // 24 FPS for cinematic look
+    }
+    draw();
+  })();
+
+  document.querySelectorAll('.choice input').forEach(inp=>{
+    inp.addEventListener('change', ()=>{
+      if(inp.type === 'radio'){
+        document.querySelectorAll(`input[name="${inp.name}"]`).forEach(i=>{
+          i.closest('.choice').classList.toggle('checked', i.checked);
+        });
+      } else {
+        inp.closest('.choice').classList.toggle('checked', inp.checked);
+      }
+    });
+  });
+
+  const friendField = document.getElementById('friendField');
+  document.querySelectorAll('input[name="bring_friend"]').forEach(r=>{
+    r.addEventListener('change', ()=>{
+      friendField.classList.toggle('show', r.value === 'yes' && r.checked);
+    });
+  });
+
+  const sections = document.querySelectorAll('.section-card');
+  const steps = document.querySelectorAll('.chain-step');
+  window.addEventListener('scroll', ()=>{
+    let idx = 0;
+    sections.forEach((s,i)=>{ if(window.scrollY + 220 > s.offsetTop) idx = i; });
+    steps.forEach((st,i)=> st.classList.toggle('active', i<=idx));
+  });
+
+  const form = document.getElementById('megaForm');
+  const submitBtn = document.getElementById('submitBtn');
+  const formMsg = document.getElementById('formMsg');
+
+  form.addEventListener('submit', async function(e){
+    e.preventDefault();
+    formMsg.classList.remove('show');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'جارِ الإرسال...';
+
+    const fd = new FormData(form);
+    
+    const valueMap = {
+      'forex': 'التداول في سوق الفوركس',
+      'portfolio': 'الاستثمار طويل الأجل وبناء المحافظ',
+      'business': 'ريادة الأعمال وتأسيس المشاريع',
+      'join_team': 'التعرف على فرص الانضمام لفريق MEGA',
+      'beginner': 'مبتدئ تماماً — أبحث عن بداية صحيحة',
+      'intermediate': 'متوسط — لدي معرفة أو تجربة سابقة',
+      'advanced': 'متقدم — أبحث عن استراتيجيات أعمق',
+      'capital': 'نقص رأس المال',
+      'knowledge': 'نقص المعرفة والخبرة التطبيقية',
+      'mentor': 'عدم وجود موجّه أو مجتمع داعم',
+      'risk': 'إدارة المخاطر والخوف من الخسارة',
+      'yes': 'نعم',
+      'maybe': 'مهتم، أود معرفة التفاصيل أولاً',
+      'no': 'لا، سأحضر بمفردي'
+    };
+
+    try{
+      // 1. Populate PDF template fields so we can render it
+      document.getElementById('pdfName').textContent = fd.get('full_name') || 'غير محدد';
+      document.getElementById('pdfCity').textContent = fd.get('city') || 'غير محدد';
+      document.getElementById('pdfPhone').textContent = fd.get('whatsapp') || 'غير محدد';
+      document.getElementById('pdfEmail').textContent = fd.get('email') || 'غير محدد';
+      document.getElementById('pdfLevel').textContent = valueMap[fd.get('level')] || 'غير محدد';
+      document.getElementById('pdfObstacle').textContent = valueMap[fd.get('obstacle')] || 'غير محدد';
+      document.getElementById('pdfConfirm').textContent = valueMap[fd.get('confirm')] || 'غير محدد';
+      
+      let interests = fd.getAll('interest[]');
+      let arInterests = interests.map(i => valueMap[i] || i).join('، ');
+      document.getElementById('pdfInterest').textContent = arInterests || 'غير محدد';
+
+      // 3. Generate PDF silently as Base64 to send to backend
+      const original = document.getElementById('pdfTemplate');
+      const clone = original.cloneNode(true);
+      clone.style.display = 'block';
+      clone.style.position = 'absolute';
+      clone.style.top = '0';
+      clone.style.left = '0';
+      clone.style.zIndex = '-9999';
+      document.body.appendChild(clone);
+
+      const opt = {
+        margin:       0,
+        filename:     'MEGA_Ticket.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true },
+        jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+      };
+
+      // We use a Promise to wait for html2pdf to finish generating base64
+      const pdfBase64 = await new Promise((resolve) => {
+        setTimeout(async () => {
+          const pdfWorker = html2pdf().set(opt).from(clone);
+          const base64Data = await pdfWorker.output('datauristring');
+          document.body.removeChild(clone);
+          // Extract just the base64 part, removing "data:application/pdf;filename=generated.pdf;base64,"
+          resolve(base64Data.split(',')[1]); 
+        }, 500); // 500ms to paint
+      });
+
+      // 4. Create JSON payload for our Netlify Backend
+      const jsonPayload = {
+        'الاسم الكامل': fd.get('full_name') || 'غير محدد',
+        'المدينة': fd.get('city') || 'غير محدد',
+        'رقم الواتساب': fd.get('whatsapp') || 'غير محدد',
+        'البريد الإلكتروني': fd.get('email') || 'غير محدد',
+        'الاهتمامات': arInterests || 'غير محدد',
+        'مستوى الخبرة': valueMap[fd.get('level')] || 'غير محدد',
+        'أكبر عقبة': valueMap[fd.get('obstacle')] || 'غير محدد',
+        'تأكيد الحضور': valueMap[fd.get('confirm')] || 'غير محدد',
+        pdfBase64: pdfBase64
+      };
+
+      // 5. Send to Netlify Function (Nodemailer backend)
+      const res = await fetch('/.netlify/functions/sendEmail', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(jsonPayload)
+      });
+      
+      const data = await res.json();
+      
+      if(res.status === 200 && data.success){
+        form.style.display = 'none';
+        document.querySelector('.chain-track').style.display = 'none';
+        document.getElementById('confirmScreen').classList.add('show');
+        window.scrollTo({top:0, behavior:'smooth'});
+      } else {
+        throw new Error(data.message || 'خطأ غير معروف من السيرفر');
+      }
+    } catch(err){
+      formMsg.classList.add('show');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'تأكيد التسجيل والحصول على مقعدي';
+      formMsg.textContent = 'سبب الخطأ: ' + err.message;
+    }
+  });
+
+  document.getElementById('downloadPdfBtn').addEventListener('click', function() {
+    const templateHTML = document.getElementById('pdfTemplate').innerHTML;
+    
+    // Open a new window
+    const printWindow = window.open('', '_blank', 'width=850,height=800');
+    
+    // Write the HTML and CSS into the new window
+    printWindow.document.write(`
+      <html dir="rtl">
+        <head>
+          <title>تذكرة مؤتمر MEGA</title>
+          <link rel="preconnect" href="https://fonts.googleapis.com">
+          <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+          <style>
+            body { 
+              font-family: 'Tajawal', sans-serif; 
+              background: #ffffff; 
+              color: #070f1c; 
+              padding: 40px; 
+              max-width: 800px; 
+              margin: 0 auto; 
+            }
+            * { box-sizing: border-box; }
+            /* Force browsers to print background colors */
+            @media print {
+              body { padding: 0; }
+              * { 
+                -webkit-print-color-adjust: exact !important; 
+                print-color-adjust: exact !important; 
+                color-adjust: exact !important; 
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div style="width: 100%;">
+            ${templateHTML}
+          </div>
+          <script>
+            // Wait for fonts to load before opening print dialog
+            window.onload = function() {
+              setTimeout(function() {
+                window.print();
+              }, 500);
+            };
+          <\/script>
+        </body>
+      </html>
+    `);
+    
+    printWindow.document.close();
+  });
+</script>
+
+</body>
+</html>

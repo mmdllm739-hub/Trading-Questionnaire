@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MEGA team | استمارة التسجيل - مؤتمر الاستثمار</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-navy:#0d1b2e;
+    --card: rgba(16, 31, 54, 0.75); 
+    --border:rgba(255,255,255,.15);
+    --teal:#00b48a;
+    --emerald:#00d2a0;
+    --white:#f4f8fb;
+    --muted:#8fa3ba;
+    --grad: linear-gradient(120deg, var(--teal), var(--emerald));
+    --danger:#e35d5d;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  
+  /* Removed solid black background to ensure canvas shows through if needed, and fixed z-indexes */
+  html,body{ background:transparent; font-family:'Tajawal', sans-serif; color:var(--white); min-height:100%; overflow-x:hidden; }
+
+  /* Smooth scroll canvas */
+  canvas#anim-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      display: block;
+      z-index: 0;
+      image-rendering: high-quality;
+  }
+  
+  .overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(7, 15, 28, 0.6);
+      z-index: 1; pointer-events: none;
+  }
+
+  .page{ position:relative; z-index:2; padding-bottom:100px; }
+
+  .navbar{
+    max-width:920px; margin:26px auto 0; padding:10px 22px;
+    background:rgba(13,27,46,.85); backdrop-filter:blur(14px);
+    border:1px solid var(--border); border-radius:999px;
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+  }
+  .nav-logo{ display:flex; align-items:center; gap:10px; }
+  .logo-ring{
+    width:52px; height:52px; border-radius:50%;
+    border:2px solid var(--teal); display:flex; align-items:center; justify-content:center;
+    background:#0a1626; flex:none;
+  }
+  .logo-ring svg{ width:30px; height:30px; }
+  
+  .nav-title{ font-family:'Cairo', sans-serif; font-weight:800; font-size:.95rem; line-height:1.3;}
+  .nav-title span{ display:block; color:var(--emerald); font-size:.7rem; font-weight:600;}
+  .nav-tag{ font-size:.78rem; color:var(--muted); border:1px solid var(--border); padding:7px 16px; border-radius:999px; white-space:nowrap;}
+  .nav-tag b{ color:var(--emerald); }
+
+  .hero{ text-align:center; padding:60px 20px 10px; max-width:760px; margin:0 auto; text-shadow:0 4px 20px rgba(0,0,0,0.8);}
+  .eyebrow{ display:inline-block; padding:7px 18px; border:1px solid rgba(0,210,160,.4); border-radius:999px; font-size:.8rem; color:var(--emerald); background:rgba(0,180,138,.15); backdrop-filter:blur(5px);}
+  .hero h1{ font-family:'Cairo', sans-serif; font-weight:800; margin-top:20px; font-size:clamp(1.6rem,4vw,2.5rem); line-height:1.55; }
+  .hero h1 em{ font-style:normal; background:var(--grad); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .hero p{ margin-top:16px; color:#e2e8f0; line-height:2; font-size:1.1rem; font-weight:500;}
+  .meta-row{ margin-top:26px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap;}
+  .meta-chip{ background:var(--card); backdrop-filter:blur(10px); border:1px solid var(--border); padding:10px 18px; border-radius:12px; font-size:.85rem; color:var(--white);}
+  .meta-chip b{ color:var(--emerald); }
+
+  .chain-track{ max-width:640px; margin:34px auto 0; padding:0 20px;}
+  .rail{ background:var(--card); backdrop-filter:blur(10px); border:1px solid var(--border); border-radius:16px; display:flex; padding:12px 8px;}
+  .chain-step{ flex:1; text-align:center; padding:6px 4px; font-size:.76rem; color:var(--muted); font-weight:700; position:relative; transition:.3s;}
+  .chain-step.active{ color:var(--white); }
+  .chain-step .dot{ width:9px; height:9px; border-radius:50%; background:rgba(255,255,255,0.1); margin:0 auto 6px; transition:.3s;}
+  .chain-step.active .dot{ background:var(--grad); box-shadow:0 0 0 4px rgba(0,180,138,.18);}
+
+  .wrap{ max-width:680px; margin:0 auto; padding:44px 18px 20px;}
+  .section-card{ background:var(--card); backdrop-filter:blur(12px); border:1px solid var(--border); border-radius:20px; padding:30px 24px; margin-bottom:22px; box-shadow:0 10px 30px rgba(0,0,0,0.5);}
+  .section-head{ display:flex; align-items:center; gap:14px; margin-bottom:22px;}
+  .section-num{ width:38px; height:38px; border-radius:11px; flex:none; position:relative; background:rgba(10,22,38,0.8); border:1.5px solid var(--teal); display:flex; align-items:center; justify-content:center;}
+  .section-num svg{ width:17px; height:17px;}
+  .section-head h2{ font-family:'Cairo', sans-serif; font-size:1.1rem; font-weight:700;}
+  .section-head p{ font-size:.8rem; color:var(--muted); margin-top:2px;}
+
+  .field{ margin-bottom:18px; }
+  .field label{ display:block; font-size:.9rem; font-weight:700; margin-bottom:8px;}
+  .field .hint{ font-weight:400; color:var(--muted); font-size:.76rem; margin-inline-start:6px;}
+  .field input[type="text"], .field input[type="tel"], .field input[type="email"]{
+    width:100%; padding:13px 15px; border-radius:12px; border:1.5px solid rgba(255,255,255,0.1);
+    background:rgba(10,22,38,0.8); color:var(--white); font-family:'Tajawal', sans-serif; font-size:.95rem; transition:.2s;
+  }
+  .field input::placeholder{ color:#556983; }
+  .field input:focus{ outline:none; border-color:var(--teal); box-shadow:0 0 0 4px rgba(0,180,138,.13);}
+
+  .choice-grid{ display:grid; gap:10px; }
+  .choice{ display:flex; align-items:center; gap:12px; padding:14px 16px; border-radius:12px; border:1.5px solid rgba(255,255,255,0.08); cursor:pointer; transition:.15s; background:rgba(10,22,38,0.7);}
+  .choice:hover{ border-color:rgba(0,180,138,.4); }
+  .choice input{ accent-color:var(--teal); width:18px; height:18px; flex:none; }
+  .choice span{ font-size:.92rem; }
+  .choice.checked{ border-color:var(--teal); background:rgba(0,180,138,.15); }
+
+  .conditional{ margin-top:12px; display:none; }
+  .conditional.show{ display:block; }
+
+  .submit-bar{ text-align:center; margin-top:8px; }
+  .submit-btn{
+    width:100%; padding:17px; border:none; border-radius:999px; cursor:pointer;
+    background:var(--grad); color:#04231a; font-family:'Cairo', sans-serif; font-weight:800;
+    font-size:1.05rem; transition:.2s; box-shadow:0 14px 30px -12px rgba(0,180,138,.5);
+  }
+  .submit-btn:hover{ transform:translateY(-2px); }
+  .submit-btn:disabled{ opacity:.6; cursor:not-allowed; transform:none; }
+  .submit-note{ margin-top:12px; font-size:.78rem; color:var(--muted); }
+  .req{ color:var(--danger); }
+  .form-msg{ text-align:center; font-size:.85rem; margin-top:10px; color:var(--danger); display:none;}
+  .form-msg.show{ display:block; }
+
+  .confirm{ display:none; text-align:center; padding:60px 24px 100px; max-width:520px; margin:0 auto; background:var(--card); backdrop-filter:blur(10px); border-radius:20px; border:1px solid var(--border); margin-top:40px;}
+  .confirm.show{ display:block; }
+  .confirm .check{ width:74px; height:74px; border-radius:50%; background:var(--grad); margin:0 auto 22px; display:flex; align-items:center; justify-content:center;}
+  .confirm h2{ font-family:'Cairo', sans-serif; font-size:1.5rem; margin-bottom:14px;}
+  .confirm p{ color:#cbd5e1; line-height:2; font-size:.98rem;}
+  .confirm .badge{ margin-top:22px; display:inline-block; padding:9px 18px; border-radius:999px; background:rgba(10,22,38,0.8); border:1px solid var(--teal); color:var(--emerald); font-size:.85rem; font-weight:700;}
+
+  footer{ text-align:center; padding:30px; color:var(--muted); font-size:.78rem; position:relative; z-index:1;}
+
+  #loader {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: #000; z-index: 9999;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      color: var(--teal); font-family: 'Cairo', sans-serif;
+      transition: opacity 0.4s ease-out;
+  }
+  .progress-bar-container { width: 300px; height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; margin-top: 20px; overflow: hidden; }
+  #progress-bar { width: 0%; height: 100%; background: var(--grad); transition: width 0.1s; }
+
+  .spacer { height: 150vh; }
+
+  @media(max-width:560px){
+    .navbar{ padding:8px 14px; }
+    .nav-tag{ display:none; }
+    .section-card{ padding:24px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="loader">
+    <h2>جاري تحضير التجربة...</h2>
+    <div class="progress-bar-container"><div id="progress-bar"></div></div>
+</div>
+
+<canvas id="anim-canvas"></canvas>
+<div class="overlay"></div>
+
+<div class="page" id="smooth-wrapper">
+  
+  <div class="navbar">
+    <div class="nav-tag"><b>29</b> من الشهر · مقاعد محدودة</div>
+    <div class="nav-logo">
+      <div class="nav-title">MEGA<span>team.</span></div>
+      <div class="logo-ring">
+        <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="navGrad" x1="0" y1="0" x2="200" y2="200" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#e8fbf5"/>
+              <stop offset="0.55" stop-color="#00B48A"/>
+              <stop offset="1" stop-color="#00D2A0"/>
+            </linearGradient>
+          </defs>
+          <path d="M75 60c-22 0-40 18-40 40s18 40 40 40h10" stroke="url(#navGrad)" stroke-width="18" stroke-linecap="round"/>
+          <path d="M125 140c22 0 40-18 40-40s-18-40-40-40h-10" stroke="url(#navGrad)" stroke-width="18" stroke-linecap="round"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero">
+    <div class="eyebrow">دعوة خاصة · مؤتمر الاستثمار والأعمال</div>
+    <h1>مؤتمر <em>MEGA</em> الاستثماري<br>مستقبل التداول وريادة الأعمال</h1>
+    <p>أنت على بُعد خطوة واحدة من الانضمام لأضخم تجمّع استثماري يجمع الفوركس، بناء الثروة، وريادة الأعمال تحت سقف واحد. عبّئ الاستمارة أدناه لتأكيد حضورك وتخصيص تجربتك.</p>
+    <div class="meta-row">
+      <div class="meta-chip">📅 <b>29</b> من الشهر الحالي</div>
+      <div class="meta-chip">🎟️ المقاعد محدودة</div>
+      <div class="meta-chip">⏱️ دقيقتين للتسجيل</div>
+    </div>
+  </div>
+
+  <div class="chain-track">
+    <div class="rail">
+      <div class="chain-step active" data-step="1"><div class="dot"></div>بياناتك</div>
+      <div class="chain-step" data-step="2"><div class="dot"></div>اهتمامك</div>
+      <div class="chain-step" data-step="3"><div class="dot"></div>التأكيد</div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <form id="megaForm">
+      <div class="section-card">
+        <div class="section-head">
+          <div class="section-num"><svg viewBox="0 0 24 24" fill="none" stroke="#00D2A0" stroke-width="2"><path d="M12 12a4 4 0 100-8 4 4 0 000 8zM4 20c0-4 3.5-7 8-7s8 3 8 7"/></svg></div>
+          <div><h2>البيانات الشخصية</h2><p>لتتمكن فرقنا من التواصل معك وتأكيد مقعدك</p></div>
+        </div>
+        <div class="field">
+          <label>الاسم الكامل <span class="req">*</span></label>
+          <input type="text" name="full_name" placeholder="مثال: أحمد محمد العلي" required>
+        </div>
+        <div class="field">
+          <label>رقم الواتساب <span class="hint">(مع رمز الدولة)</span> <span class="req">*</span></label>
+          <input type="tel" name="whatsapp" placeholder="مثال: 970 5X XXX XXXX+" required>
+        </div>
+        <div class="field">
+          <label>البريد الإلكتروني</label>
+          <input type="email" name="email" placeholder="example@email.com">
+        </div>
+        <div class="field">
+          <label>المدينة / المحافظة <span class="req">*</span></label>
+          <input type="text" name="city" placeholder="مثال: جنين" required>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-head">
+          <div class="section-num"><svg viewBox="0 0 24 24" fill="none" stroke="#00D2A0" stroke-width="2"><path d="M3 17l6-6 4 4 8-8"/></svg></div>
+          <div><h2>مستوى الخبرة والاهتمام</h2><p>نساعدك على تخصيص محتوى الجلسات لمستواك</p></div>
+        </div>
+        <div class="field">
+          <label>ما هو مجال اهتمامك الرئيسي؟ <span class="hint">(يمكن اختيار أكثر من خيار)</span></label>
+          <div class="choice-grid">
+            <label class="choice"><input type="checkbox" name="interest[]" value="forex"><span>التداول في سوق الفوركس</span></label>
+            <label class="choice"><input type="checkbox" name="interest[]" value="portfolio"><span>الاستثمار طويل الأجل وبناء المحافظ</span></label>
+            <label class="choice"><input type="checkbox" name="interest[]" value="business"><span>ريادة الأعمال وتأسيس المشاريع</span></label>
+            <label class="choice"><input type="checkbox" name="interest[]" value="join_team"><span>التعرف على فرص الانضمام لفريق MEGA</span></label>
+          </div>
+        </div>
+        <div class="field">
+          <label>كيف تقيّم خبرتك الحالية في التداول والاستثمار؟</label>
+          <div class="choice-grid">
+            <label class="choice"><input type="radio" name="level" value="beginner"><span>مبتدئ تماماً — أبحث عن بداية صحيحة</span></label>
+            <label class="choice"><input type="radio" name="level" value="intermediate"><span>متوسط — لدي معرفة أو تجربة سابقة</span></label>
+            <label class="choice"><input type="radio" name="level" value="advanced"><span>متقدم — أبحث عن استراتيجيات أعمق</span></label>
+          </div>
+        </div>
+        <div class="field">
+          <label>أكبر عقبة تواجهك حالياً في تحقيق أهدافك المالية؟</label>
+          <div class="choice-grid">
+            <label class="choice"><input type="radio" name="obstacle" value="capital"><span>نقص رأس المال</span></label>
+            <label class="choice"><input type="radio" name="obstacle" value="knowledge"><span>نقص المعرفة والخبرة التطبيقية</span></label>
+            <label class="choice"><input type="radio" name="obstacle" value="mentor"><span>عدم وجود موجّه أو مجتمع داعم</span></label>
+            <label class="choice"><input type="radio" name="obstacle" value="risk"><span>إدارة المخاطر والخوف من الخسارة</span></label>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-head">
+          <div class="section-num"><svg viewBox="0 0 24 24" fill="none" stroke="#00D2A0" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg></div>
+          <div><h2>تأكيد الحضور</h2><p>الخطوة الأخيرة لحجز مقعدك</p></div>
+        </div>
+        <div class="field">
+          <label>هل تؤكد حضورك في الموعد المحدد؟</label>
+          <div class="choice-grid">
+            <label class="choice"><input type="radio" name="confirm" value="yes"><span>نعم، أؤكد حضوري تماماً</span></label>
+            <label class="choice"><input type="radio" name="confirm" value="maybe"><span>مهتم، أود معرفة التفاصيل أولاً</span></label>
+          </div>
+        </div>
+        <div class="field">
+          <label>هل ترغب بدعوة صديق أو شريك عمل؟</label>
+          <div class="choice-grid">
+            <label class="choice"><input type="radio" name="bring_friend" value="yes" id="friendYes"><span>نعم</span></label>
+            <label class="choice"><input type="radio" name="bring_friend" value="no"><span>لا، سأحضر بمفردي</span></label>
+          </div>
+          <div class="conditional" id="friendField">
+            <input type="text" name="friend_info" placeholder="اسم الصديق ورقم الواتساب">
+          </div>
+        </div>
+      </div>
+
+      <div class="submit-bar">
+        <button type="submit" class="submit-btn" id="submitBtn">تأكيد التسجيل والحصول على مقعدي</button>
+        <p class="submit-note">سيتواصل معك أحد مستشاري فريق MEGA عبر الواتساب خلال 24 ساعة</p>
+      </div>
+    </form>
+    
+    <div class="spacer"></div>
+  </div>
+  <footer>© MEGA team — استمارة تسجيل المؤتمر</footer>
+</div>
+
+<script>
+    const canvas = document.getElementById('anim-canvas');
+    const ctx = canvas.getContext('2d'); 
+    const loader = document.getElementById('loader');
+    const progressBar = document.getElementById('progress-bar');
+    
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    
+    const frameCount = 240; 
+    const getFramePath = index => `./frame_${index.toString().padStart(6, '0')}.png`;
+    
+    const images = [];
+    let loadedCount = 0;
+    
+    let targetScroll = 0;
+    let currentScroll = 0;
+    let lastDrawnFrame = -1;
+
+    // Load images natively without async decode() to prevent browser crash
+    for (let i = 0; i < frameCount; i++) {
+        const img = new Image();
+        img.onload = () => {
+            loadedCount++;
+            progressBar.style.width = (loadedCount / frameCount) * 100 + '%';
+            
+            if (i === 0) {
+                // Initialize canvas sizes
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+            }
+            if (loadedCount === frameCount) {
+                initAnimation();
+            }
+        };
+        img.onerror = () => {
+            loadedCount++;
+            if (loadedCount === frameCount) initAnimation();
+        };
+        img.src = getFramePath(i);
+        images.push(img);
+    }
+
+    function initAnimation() {
+        loader.style.opacity = '0';
+        setTimeout(() => loader.style.display = 'none', 500);
+
+        // Draw initial frame immediately
+        if (images[0] && images[0].complete && images[0].naturalWidth !== 0) {
+            ctx.drawImage(images[0], 0, 0);
+            lastDrawnFrame = 0;
+        }
+
+        document.querySelectorAll('.choice input').forEach(inp=>{
+            inp.addEventListener('change', ()=>{
+                if(inp.type === 'radio'){
+                    document.querySelectorAll(`input[name="${inp.name}"]`).forEach(i=>{
+                        i.closest('.choice').classList.toggle('checked', i.checked);
+                    });
+                } else {
+                    inp.closest('.choice').classList.toggle('checked', inp.checked);
+                }
+            });
+        });
+
+        const friendField = document.getElementById('friendField');
+        document.querySelectorAll('input[name="bring_friend"]').forEach(r=>{
+            r.addEventListener('change', ()=>{
+                friendField.classList.toggle('show', r.value === 'yes' && r.checked);
+            });
+        });
+
+        const sections = document.querySelectorAll('.section-card');
+        const steps = document.querySelectorAll('.chain-step');
+
+        function renderLoop() {
+            targetScroll = window.scrollY;
+            
+            // Smooth lerp for background only
+            currentScroll += (targetScroll - currentScroll) * 0.15; 
+            
+            // Update active state in stepper based on native scroll
+            let idx = 0;
+            sections.forEach((s, i) => { if (targetScroll + 220 > s.offsetTop) idx = i; });
+            steps.forEach((st, i) => st.classList.toggle('active', i <= idx));
+
+            // Canvas logic based on smoothed scroll
+            const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+            
+            if (maxScroll > 0) {
+                const scrollFraction = Math.max(0, Math.min(1, currentScroll / maxScroll));
+                const frameIndex = Math.floor(scrollFraction * (frameCount - 1));
+                
+                if (frameIndex !== lastDrawnFrame) {
+                    const img = images[frameIndex];
+                    if (img && img.complete && img.naturalWidth !== 0) {
+                        ctx.drawImage(img, 0, 0);
+                        lastDrawnFrame = frameIndex;
+                    }
+                }
+            }
+            
+            requestAnimationFrame(renderLoop);
+        }
+        
+        renderLoop();
+    }
+</script>
+</body>
+</html>
